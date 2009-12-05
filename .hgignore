@@ -4,3 +4,4 @@ build
 env
 *.swp
 *.egg-info
+pip-log.txt
