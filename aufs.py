@@ -57,17 +57,29 @@ class AUFS(object):
         mtab_entry = mtab().get(self.mountpoint)
         if not mtab_entry:
             return []
+        aufs_branches = self._get_aufs1_branches(mtab_entry)
+        if not aufs_branches:
+            aufs_branches = self._get_aufs2_branches(mtab_entry)
+        if not aufs_branches:
+            raise ValueError("Can't retrieve aufs branches for %s" % self.mountpoint)
         return [
             (self.cleanpath(path), access)
-            for (path, access) in reduce(list.__add__, [
-                    [
-                        layer.split("=", 1)
-                        for layer in option.split(":")[1:]
-                    ]
-                    for option in mtab_entry["options"]
-                    if option.startswith("br:")
-            ])
+            for (path, access) in [
+                br.split("=", 1)
+                for br in aufs_branches
+            ]
         ]
+
+    def _get_aufs1_branches(self, mtab_entry):
+        br_opts = [opt for opt in mtab_entry["options"] if opt.startswith("br:")]
+        if not br_opts:
+            return None
+        return reduce(list.__add__, [opt.split(":", 1)[1:] for opt in br_opts])
+
+    def _get_aufs2_branches(self, mtab_entry):
+        si_opt = [opt.split("=", 1)[1] for opt in mtab_entry.get("options") if opt.startswith("si=")][0]
+        si_dir = "/sys/fs/aufs/si_%s" % si_opt
+        return [file(os.path.join(si_dir, f)).read().strip() for f in os.listdir(si_dir) if f.startswith("br")]
 
     def set_layers(self, layers):
         layers = [(self.cleanpath(path), access) for (path, access) in layers]
