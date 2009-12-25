@@ -74,7 +74,7 @@ class AUFS(object):
         br_opts = [opt for opt in mtab_entry["options"] if opt.startswith("br:")]
         if not br_opts:
             return None
-        return reduce(list.__add__, [opt.split(":", 1)[1:] for opt in br_opts])
+        return reduce(list.__add__, [opt.split(":")[1:] for opt in br_opts])
 
     def _get_aufs2_branches(self, mtab_entry):
         si_opt = [opt.split("=", 1)[1] for opt in mtab_entry.get("options") if opt.startswith("si=")][0]
