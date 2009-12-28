@@ -4,8 +4,6 @@ import re
 import sys
 import subprocess
 
-import simplejson
-
 def sh(cmd, debug=False):
     if debug:
         sys.stderr.write("# " + " ".join(cmd) + "\n")
